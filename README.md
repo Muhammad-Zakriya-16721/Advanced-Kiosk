@@ -2,6 +2,8 @@
 
 A production-ready, touch-first self-service kiosk and mobile ordering application. This project demonstrates advanced React patterns, high-performance animations, and rigorous responsive design.
 
+### 🚀 [**View Live Demo**](https://quickbite-kiosk.vercel.app/)
+
 ## ✨ High-Performance Features
 - **Kiosk-Optimized UX:** Engineered for large-scale touch targets, zero-hover dependency, and high-contrast visual hierarchy.
 - **Fluid Motion Design:** Utilizes `Framer Motion` for staggered grid entrance, layout transitions, and interactive feedback loops.
@@ -14,7 +16,24 @@ A production-ready, touch-first self-service kiosk and mobile ordering applicati
 - **Styling:** Tailwind CSS (Utility-first, Mobile-first)
 - **Animation:** Framer Motion
 - **Icons:** Lucide React
-- **Deployment:** Vercel / Netlify
+- **Deployment:** Vercel
 
 ## 📸 Preview
-<img width="2752" height="1536" alt="Gemini_Generated_Image_s2nqtos2nqtos2nq" src="https://github.com/user-attachments/assets/ac8ea3dc-6ced-473e-a9ec-1888acc8bf68" />
+<img width="100%" alt="QuickBite Kiosk Interface Preview" src="https://github.com/user-attachments/assets/ac8ea3dc-6ced-473e-a9ec-1888acc8bf68" />
+
+## 💻 Run Locally
+
+Clone the project to test the responsive behaviors on your local machine.
+
+```bash
+# 1. Clone the repository
+git clone [https://github.com/your-username/quickbite-kiosk.git](https://github.com/your-username/quickbite-kiosk.git)
+
+# 2. Enter the directory
+cd quickbite-kiosk
+
+# 3. Install dependencies
+npm install
+
+# 4. Start the development server
+npm run dev
