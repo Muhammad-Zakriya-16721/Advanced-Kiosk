@@ -11,7 +11,7 @@ html {
 
 body {
   height: 100%;
-  background-color: #111; /* Fallback for dark mode */
+  background-color: #111;
 }
 
 /* Custom Selection Color */
