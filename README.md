@@ -21,13 +21,21 @@ A production-ready, touch-first self-service kiosk and mobile ordering applicati
 ## 📸 Preview
 <img width="100%" alt="QuickBite Kiosk Interface Preview" src="https://github.com/user-attachments/assets/ac8ea3dc-6ced-473e-a9ec-1888acc8bf68" />
 
-## 💻 Run Locally
+## 🧠 Engineering Challenges
+### 1. Kiosk-First Layout Stability
+Used `min-h-[100svh]` and strict overflow management to prevent the "jumpy" UI often caused by mobile browser address bars, ensuring a stable, app-like experience.
 
-Clone the project to test the responsive behaviors on your local machine.
+### 2. Gesture-Safe Navigation
+Navigating the "Safe Area" challenges of modern smartphones by implementing dynamic padding that respects system-level gesture bars and notches.
+
+### 3. State Synchronization
+Managed a persistent cart state that remains consistent across page refreshes while ensuring memoized handlers (`useCallback`) prevent unnecessary re-renders in a high-density menu grid.
+
+## 💻 Run Locally
 
 ```bash
 # 1. Clone the repository
-git clone [https://github.com/your-username/quickbite-kiosk.git](https://github.com/your-username/quickbite-kiosk.git)
+git clone [https://github.com/Muhammad-Zakriya-16721/quickbite-kiosk.git](https://github.com/Muhammad-Zakriya-16721/quickbite-kiosk.git)
 
 # 2. Enter the directory
 cd quickbite-kiosk
