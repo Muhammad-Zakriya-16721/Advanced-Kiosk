@@ -1,16 +1,32 @@
-import React, { useMemo, useEffect, useState } from "react";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, AlertCircle } from "lucide-react";
-import { motion, AnimatePresence, useAnimation, useReducedMotion } from "framer-motion";
+import React, { useMemo, useEffect, useState, useCallback } from "react";
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence, useAnimation, useReducedMotion, LayoutGroup } from "framer-motion";
 
 const fmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
-const CartPanel = ({ cartItems, onUpdateQuantity, onCheckout, onClearCart, orderNo }) => {
+const CartPanel = ({ 
+  cartItems, 
+  onUpdateQuantity, 
+  onCheckout, 
+  onClearCart, 
+  orderNo,
+  // Focus Props
+  isKeyboardEnabled,
+  isFocusedSection,
+  focusedIndex,
+  onManualFocus, // New Prop
+  // Lifted State
+  isClearConfirming,
+  onTriggerClear
+}) => {
   const controls = useAnimation();
   const shouldReduceMotion = useReducedMotion();
-  
-  // State for Clear Cart Safety Mechanism
-  const [isClearConfirming, setIsClearConfirming] = useState(false);
 
+  // STABLE FOCUS HANDLER
+  const handleFocus = useCallback((index) => {
+    if (onManualFocus) onManualFocus(index);
+  }, [onManualFocus]);
+  
   // Subtle Border Glow Animation (Replaced Heartbeat)
   useEffect(() => {
     if (cartItems.length > 0 && !shouldReduceMotion) {
@@ -19,21 +35,8 @@ const CartPanel = ({ cartItems, onUpdateQuantity, onCheckout, onClearCart, order
         transition: { duration: 0.4, ease: "easeInOut" }
       });
     }
-    // Reset confirmation state when cart changes
-    if (cartItems.length === 0) setIsClearConfirming(false);
   }, [cartItems, controls, shouldReduceMotion]);
 
-  // Handle Clear Cart Click with Safety Check
-  const handleClearClick = () => {
-    if (isClearConfirming) {
-      onClearCart();
-      setIsClearConfirming(false);
-    } else {
-      setIsClearConfirming(true);
-      // Auto-reset confirmation after 3 seconds if not clicked
-      setTimeout(() => setIsClearConfirming(false), 3000);
-    }
-  };
 
   const subtotal = useMemo(
     () => cartItems.reduce((acc, item) => acc + (Number(item.price) || 0) * item.quantity, 0),
@@ -47,9 +50,12 @@ const CartPanel = ({ cartItems, onUpdateQuantity, onCheckout, onClearCart, order
       id="cart-panel" 
       animate={controls}
       className="
-        w-full h-full flex flex-col bg-[#1A1A1A] border-l border-white/5 relative z-40
+        w-full h-full flex flex-col 
+        bg-[var(--glass-panel)] backdrop-blur-[var(--blur-strength)] 
+        border-l border-[var(--glass-border)] 
+        relative z-40
         /* Adjusted Shadow: shadow-md mobile, shadow-2xl desktop */
-        shadow-md md:shadow-2xl
+        shadow-2xl transition-colors duration-300
         pb-[env(safe-area-inset-bottom)]
       "
     >
@@ -58,10 +64,10 @@ const CartPanel = ({ cartItems, onUpdateQuantity, onCheckout, onClearCart, order
       </div>
 
       {/* HEADER */}
-      <div className="p-4 md:p-6 border-b border-white/5 flex items-center justify-between bg-[#1A1A1A]">
+      <div className="p-4 md:p-6 border-b border-[var(--glass-border)] flex items-center justify-between bg-white/10 dark:bg-white/5 backdrop-blur-md transition-colors duration-300">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">My Order</h2>
-          <p className="text-gray-500 text-xs mt-1 font-medium tracking-wider uppercase">
+          <h2 className="text-xl md:text-2xl font-bold text-[var(--text-primary)] tracking-tight">My Order</h2>
+          <p className="text-[var(--text-secondary)] text-xs mt-1 font-medium tracking-wider uppercase">
             Order {orderNo}
           </p>
         </div>
@@ -69,15 +75,15 @@ const CartPanel = ({ cartItems, onUpdateQuantity, onCheckout, onClearCart, order
         {cartItems.length > 0 ? (
           <button 
             type="button"
-            onClick={handleClearClick}
+            onClick={onTriggerClear}
             aria-label={isClearConfirming ? "Confirm clear cart" : "Clear all items"}
             className={`
-              p-3 rounded-xl border transition-all active:scale-95 flex items-center gap-2
-              focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1A1A]
+              transition-all duration-300 active:scale-95 flex items-center gap-2
+              outline-none p-2 rounded-xl border
               /* Safety Visual State */
               ${isClearConfirming 
-                ? "bg-red-600 border-red-500 text-white w-auto px-4" 
-                : "bg-[#2A2A2A] border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white"
+                ? "bg-red-600 border-red-500 text-white w-auto px-4 shadow-md" 
+                : "bg-white border-gray-200 dark:border-red-500/30 dark:bg-[#2A2A2A] text-red-500 hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:hover:bg-red-900/20 dark:hover:text-red-400"
               }
             `}
           >
@@ -90,7 +96,7 @@ const CartPanel = ({ cartItems, onUpdateQuantity, onCheckout, onClearCart, order
              )}
           </button>
         ) : (
-          <div className="bg-brand-dark p-3 rounded-xl border border-white/5">
+          <div className="bg-gray-100 dark:bg-brand-dark p-3 rounded-xl border border-transparent dark:border-white/5">
              <ShoppingBag size={20} className="text-brand-primary" />
           </div>
         )}
@@ -99,6 +105,7 @@ const CartPanel = ({ cartItems, onUpdateQuantity, onCheckout, onClearCart, order
       {/* ITEMS LIST */}
       <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 no-scrollbar">
         {/* Removed mode="popLayout" to reduce jumps */}
+        <LayoutGroup id="cart-panel">
         <AnimatePresence>
           {cartItems.length === 0 ? (
             <motion.div 
@@ -106,32 +113,44 @@ const CartPanel = ({ cartItems, onUpdateQuantity, onCheckout, onClearCart, order
               animate={{ opacity: 1 }} 
               className="h-full flex flex-col items-center justify-center text-center p-8 opacity-40"
             >
-              <ShoppingBag size={48} className="mb-4 text-gray-600 md:w-16 md:h-16" strokeWidth={1} />
-              <p className="text-base md:text-lg font-bold text-gray-400">Your tray is empty</p>
-              <p className="text-xs md:text-sm text-gray-500">Tap items to add them here</p>
+              <ShoppingBag size={48} className="mb-4 text-gray-300 dark:text-gray-600 md:w-16 md:h-16" strokeWidth={1} />
+              <p className="text-base md:text-lg font-bold text-[var(--text-secondary)]">Your tray is empty</p>
+              <p className="text-xs md:text-sm text-gray-400 dark:text-gray-500">Tap items to add them here</p>
             </motion.div>
           ) : (
-            cartItems.map((item) => (
-              <CartItem key={item.id} item={item} onUpdateQuantity={onUpdateQuantity} shouldReduceMotion={shouldReduceMotion} />
-            ))
+            cartItems.map((item, index) => {
+              const isFocused = isKeyboardEnabled && isFocusedSection && index === focusedIndex;
+              return (
+                <CartItem 
+                  key={item.id} 
+                  item={item} 
+                  index={index}
+                  onUpdateQuantity={onUpdateQuantity} 
+                  shouldReduceMotion={shouldReduceMotion} 
+                  isFocused={isFocused}
+                  onFocus={handleFocus} // Stable Callback
+                />
+              );
+            })
           )}
         </AnimatePresence>
+        </LayoutGroup>
       </div>
 
       {/* FOOTER */}
-      <div className="p-4 md:p-6 bg-[#1A1A1A] border-t border-white/5 mt-auto">
+      <div className="p-4 md:p-6 bg-white/20 dark:bg-black/60 backdrop-blur-md border-t border-[var(--glass-border)] mt-auto transition-colors duration-300">
         <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
-          <div className="flex justify-between text-gray-400 text-xs md:text-sm">
+          <div className="flex justify-between text-[var(--text-secondary)] text-xs md:text-sm">
             <span>Subtotal</span>
             <span className="tabular-nums">{fmt.format(subtotal)}</span>
           </div>
-          <div className="flex justify-between text-gray-400 text-xs md:text-sm">
+          <div className="flex justify-between text-[var(--text-secondary)] text-xs md:text-sm">
             <span>Tax (10%)</span>
             <span className="tabular-nums">{fmt.format(tax)}</span>
           </div>
-          <div className="flex justify-between text-white text-lg md:text-xl font-bold pt-3 md:pt-4 border-t border-white/10">
+          <div className="flex justify-between text-[var(--text-primary)] text-lg md:text-xl font-bold pt-3 md:pt-4 border-t border-[var(--glass-border)]">
             <span>Total</span>
-            <span className="text-brand-primary tabular-nums">{fmt.format(total)}</span>
+            <span className="text-zinc-900 dark:text-brand-primary tabular-nums">{fmt.format(total)}</span>
           </div>
         </div>
 
@@ -159,32 +178,40 @@ const CartPanel = ({ cartItems, onUpdateQuantity, onCheckout, onClearCart, order
   );
 };
 
-const CartItem = React.memo(({ item, onUpdateQuantity, shouldReduceMotion }) => {
+const CartItem = React.memo(({ item, index, onUpdateQuantity, shouldReduceMotion, isFocused, onFocus }) => {
   const handleImageError = (e) => {
     e.target.style.display = 'none';
   };
 
   return (
     <motion.div
-      layout
+      layout="position"
+      style={{ transform: "translateZ(0)" }} // GPU Hint
+      onClick={() => onFocus(index)} // Trigger manual focus
       initial={!shouldReduceMotion ? { opacity: 0, x: 20 } : false}
       animate={{ opacity: 1, x: 0 }}
       exit={!shouldReduceMotion ? { opacity: 0, x: -20 } : false}
-      className="bg-[#1F1F1F] p-3 rounded-2xl flex gap-3 border border-white/5 group"
+      className={`
+        bg-white/50 dark:bg-white/5 p-3 rounded-2xl flex gap-3 
+        border border-[var(--glass-border)] group 
+        hover:bg-white/80 dark:hover:bg-white/10 transition-colors
+        cursor-pointer /* Add cursor */
+        ${isFocused ? 'ring-4 ring-brand-primary shadow-lg z-10' : ''}
+      `}
     >
       <img 
         src={item.image} 
         alt={item.name} 
         onError={handleImageError}
-        className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover bg-black/20" 
+        className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover bg-gray-100 dark:bg-black/20" 
         loading="lazy" 
       />
       
       <div className="flex-1 flex flex-col justify-between py-1">
         <div className="flex justify-between items-start gap-2">
-          <h4 className="text-white font-bold text-sm md:text-base line-clamp-2 leading-tight">{item.name}</h4>
+          <h4 className="text-[var(--text-primary)] font-bold text-sm md:text-base line-clamp-2 leading-tight">{item.name}</h4>
           {/* Strengthened Visual Hierarchy for Price */}
-          <span className="text-brand-primary font-bold text-base md:text-lg tabular-nums">
+          <span className="text-zinc-900 dark:text-brand-primary font-bold text-base md:text-lg tabular-nums">
             {fmt.format((Number(item.price)||0) * item.quantity)}
           </span>
         </div>
@@ -195,17 +222,19 @@ const CartItem = React.memo(({ item, onUpdateQuantity, shouldReduceMotion }) => 
             onClick={() => onUpdateQuantity(item.id, -1)}
             aria-label="Decrease quantity"
             className="
-              /* Increased Button Size: w-10 h-10 mobile, w-11 h-11 desktop */
-              w-10 h-10 md:w-11 md:h-11 
-              rounded-xl bg-[#2A2A2A] flex items-center justify-center text-gray-400 
-              hover:text-white hover:bg-[#333] transition-colors
-              focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary
-            "
+                w-10 h-10 md:w-11 md:h-11 
+                rounded-xl flex items-center justify-center 
+                bg-white border border-gray-200 shadow-sm text-zinc-900 
+                hover:bg-gray-50 hover:text-black hover:border-gray-300
+                dark:bg-[#2A2A2A] dark:border-transparent dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#333]
+                transition-all duration-200
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary
+              "
           >
             {item.quantity === 1 ? <Trash2 size={18} /> : <Minus size={18} />}
           </button>
           
-          <span className="text-white font-bold w-6 text-center text-sm md:text-base tabular-nums">
+          <span className="text-zinc-900 dark:text-white font-bold w-6 text-center text-sm md:text-base tabular-nums">
             {item.quantity}
           </span>
           
@@ -216,9 +245,12 @@ const CartItem = React.memo(({ item, onUpdateQuantity, shouldReduceMotion }) => 
              className="
                 /* Increased Button Size */
                 w-10 h-10 md:w-11 md:h-11
-                rounded-xl bg-[#2A2A2A] flex items-center justify-center text-gray-400 
-                hover:text-white hover:bg-[#333] transition-colors
-                focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary
+                rounded-xl flex items-center justify-center 
+                bg-white border border-gray-200 shadow-sm text-zinc-900 
+                hover:bg-gray-50 hover:text-black hover:border-gray-300
+                dark:bg-[#2A2A2A] dark:border-transparent dark:text-gray-400 dark:hover:text-white dark:hover:bg-[#333]
+                transition-all duration-200
+                outline-none
              "
           >
             <Plus size={18} />

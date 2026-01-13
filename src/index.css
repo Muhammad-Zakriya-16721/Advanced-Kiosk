@@ -14,6 +14,29 @@ body {
   background-color: #111;
 }
 
+@layer base {
+  :root {
+    /* Light Mode Variables (Default in variables, explicitly handled by class) */
+    --bg-gradient: radial-gradient(circle at top right, #f5f5f5, #e5e5e5, #d4d4d4);
+    --glass-panel: rgba(255, 255, 255, 0.7); /* More opaque for light mode visibility */
+    --glass-border: rgba(0, 0, 0, 0.05);
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --blur-strength: 24px; /* Stronger blur for light mode */
+  }
+
+  /* Dark Mode Overrides */
+  .dark {
+    --bg-gradient: radial-gradient(circle at top right, #252525, #111111, #000000);
+    --glass-panel: rgba(0, 0, 0, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: #9ca3af;
+    --blur-strength: 16px;
+  }
+}
+
+
 /* Custom Selection Color */
 ::selection {
   background-color: #ffc700;

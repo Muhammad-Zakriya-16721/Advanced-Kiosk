@@ -37,7 +37,9 @@ const OrderSuccess = ({ isOpen, orderNo, onClose, autoCloseMs = 5000 }) => {
       // Restore focus
       try {
         previouslyFocusedEl.current?.focus?.();
-      } catch {}
+      } catch {
+        /* empty */
+      }
     };
   }, [isOpen, onClose, autoCloseMs]);
 
@@ -79,10 +81,16 @@ const OrderSuccess = ({ isOpen, orderNo, onClose, autoCloseMs = 5000 }) => {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0, y: 100 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-md bg-[#1A1A1A] border border-white/10 rounded-3xl p-8 flex flex-col items-center text-center shadow-2xl overflow-hidden"
+            className="
+              relative w-full max-w-md 
+              bg-white dark:bg-[#1A1A1A] 
+              border border-gray-100 dark:border-white/10 
+              rounded-3xl p-8 flex flex-col items-center text-center 
+              shadow-2xl overflow-hidden transition-colors duration-300
+            "
           >
-            {/* Background Glow */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-green-500/20 blur-3xl rounded-full pointer-events-none" />
+            {/* Background Glow - Adjusted for Light Mode */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-green-500/10 blur-3xl rounded-full pointer-events-none" />
 
             {/* Checkmark */}
             <div className="relative mb-6">
@@ -90,27 +98,27 @@ const OrderSuccess = ({ isOpen, orderNo, onClose, autoCloseMs = 5000 }) => {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-lg shadow-green-500/30"
+                className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-xl shadow-green-500/20"
               >
-                <Check size={48} strokeWidth={4} className="text-black" />
+                <Check size={48} strokeWidth={4} className="text-white" />
               </motion.div>
             </div>
 
-            <h2 id="order-success-title" className="text-3xl font-black text-white mb-2">
+            <h2 id="order-success-title" className="text-3xl font-black text-zinc-900 dark:text-white mb-2">
               Order Placed!
             </h2>
 
-            <p id="order-success-desc" className="text-gray-400 mb-6">
+            <p id="order-success-desc" className="text-zinc-600 dark:text-gray-400 mb-6">
               Kitchen is preparing your meal.
               <br />
               <span className="text-sm">Please take your receipt.</span>
             </p>
 
-            <div className="bg-[#252525] border border-dashed border-white/20 rounded-xl p-4 w-full mb-8">
-              <p className="text-gray-500 text-xs uppercase tracking-widest font-bold mb-1">
+            <div className="bg-gray-50 dark:bg-[#252525] border border-dashed border-gray-200 dark:border-white/10 rounded-xl p-4 w-full mb-8 transition-colors">
+              <p className="text-zinc-500 dark:text-gray-400 text-xs uppercase tracking-widest font-bold mb-1">
                 Order Number
               </p>
-              <p className="text-4xl font-mono font-bold text-brand-primary tracking-widest">
+              <p className="text-4xl font-mono font-bold text-zinc-900 dark:text-brand-primary tracking-widest">
                 {displayNo}
               </p>
             </div>
@@ -120,7 +128,7 @@ const OrderSuccess = ({ isOpen, orderNo, onClose, autoCloseMs = 5000 }) => {
               type="button"
               onClick={onClose}
               aria-label="Start a new order"
-              className="w-full py-4 bg-white text-black font-bold text-lg rounded-xl hover:bg-gray-200 transition-colors active:scale-95"
+              className="w-full py-4 bg-zinc-900 dark:bg-white text-white dark:text-black font-bold text-lg rounded-xl hover:opacity-90 transition-opacity active:scale-95 shadow-lg"
             >
               Start New Order
             </button>
