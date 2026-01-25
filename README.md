@@ -1,47 +1,61 @@
-# QuickBite | Next-Gen Food Kiosk Interface
+# QuickBite Kiosk 🍔🍟
 
-A production-ready, touch-first self-service kiosk and mobile ordering application. This project demonstrates advanced React patterns, high-performance animations, and rigorous responsive design.
+A modern, high-performance self-service kiosk application built with Next.js, TypeScript, and Tailwind CSS. Designed for speed, accessibility, and a premium visual experience.
 
-### 🚀 [**View Live Demo**](https://quickbite-kiosk.vercel.app/)
+![Project Preview](/public/preview.png)
 
-## ✨ High-Performance Features
-- **Kiosk-Optimized UX:** Engineered for large-scale touch targets, zero-hover dependency, and high-contrast visual hierarchy.
-- **Fluid Motion Design:** Utilizes `Framer Motion` for staggered grid entrance, layout transitions, and interactive feedback loops.
-- **Mobile Safe-Area Aware:** Implements `env(safe-area-inset)` logic to ensure 100% compatibility with modern notches and gesture bars.
-- **State & Persistence:** Robust cart logic with `useCallback` optimization and `LocalStorage` data synchronization.
-- **A11y Compliant:** Semantic HTML, ARIA labels, and focus-trap management for inclusive design.
+> **Note**: This is a Frontend-Only Portfolio Project using mock data. No backend server is required.
+
+## ✨ Features
+
+- **Client-side Filtering**: Real-time filtering, sorting, and search with instant feedback (Mock Data).
+- **Visual Richness**: Glassmorphism UI, smooth Framer Motion animations, and responsive layouts.
+- **Smart Cart**: Optimistic UI updates, modifier support (customizations), and localized cart retention.
+- **Checkout UI Flow**:
+  - Frontend-only Payment Simulation (with randomized 10% failure state).
+- Secure Integer-based currency math.
+- Tipping logic (10%, 15%, 20%).
+- **Accessibility (A11y)**: Full keyboard navigation (Tab/Enter/Space), ARIA roles, and focus management.
+- **Performance**: Optimized `next/image` usage, prioritized LCP loading, and code splitting.
 
 ## 🛠️ Tech Stack
-- **Library:** React 18
-- **Styling:** Tailwind CSS (Utility-first, Mobile-first)
-- **Animation:** Framer Motion
-- **Icons:** Lucide React
-- **Deployment:** Vercel
 
-## 📸 Preview
-<img width="100%" alt="QuickBite Kiosk Interface Preview" src="https://github.com/user-attachments/assets/ac8ea3dc-6ced-473e-a9ec-1888acc8bf68" />
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) + CSS Variables
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Language**: TypeScript
 
-## 🧠 Engineering Challenges
-### 1. Kiosk-First Layout Stability
-Used `min-h-[100svh]` and strict overflow management to prevent the "jumpy" UI often caused by mobile browser address bars, ensuring a stable, app-like experience.
+## 🚀 Getting Started
 
-### 2. Gesture-Safe Navigation
-Navigating the "Safe Area" challenges of modern smartphones by implementing dynamic padding that respects system-level gesture bars and notches.
+1.  **Install Dependencies**:
 
-### 3. State Synchronization
-Managed a persistent cart state that remains consistent across page refreshes while ensuring memoized handlers (`useCallback`) prevent unnecessary re-renders in a high-density menu grid.
+    ```bash
+    npm install
+    ```
 
-## 💻 Run Locally
+2.  **Run Development Server**:
 
-```bash
-# 1. Clone the repository
-git clone [https://github.com/Muhammad-Zakriya-16721/quickbite-kiosk.git](https://github.com/Muhammad-Zakriya-16721/quickbite-kiosk.git)
+    ```bash
+    npm run dev
+    ```
 
-# 2. Enter the directory
-cd quickbite-kiosk
+3.  **Open Kiosk**:
+    Navigate to [http://localhost:3000](http://localhost:3000)
 
-# 3. Install dependencies
-npm install
+## 📂 Project Structure
 
-# 4. Start the development server
-npm run dev
+- `src/app`: Page routes and layouts.
+- `src/components`: Reusable UI components (Sidebar, MenuGrid, Modals).
+- `src/hooks`: Custom logic hooks (`useMenuFilter`, `useKeyboardControls`).
+- `src/lib`: Utilities (`money.ts` for safe math).
+- `src/data`: Mock data for menus and modifiers.
+
+## 🎨 Customization
+
+- **Theme**: Toggle Dark/Light mode via Settings (Gear Icon).
+- **Data**: Edit `src/data/menuItems.ts` to update the menu.
+
+---
+
+_Built for the Modern Food Service Industry._

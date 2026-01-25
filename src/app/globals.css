@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-primary: #ffc700;
+  --color-brand-dark: #111;
+  
+  /* Retaining font-sans reference if needed, usually default in v4 */
+}
+
+/* Kiosk Specific Styles migrating from index.css */
+:root {
+  /* Light Mode Variables */
+  --bg-gradient: radial-gradient(circle at top right, #f5f5f5, #e5e5e5, #d4d4d4);
+  --glass-panel: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --blur-strength: 24px;
+}
+
+/* Media query removed to prevent overriding manual theme toggle */
+
+/* Explicit Dark Mode Overrides if user uses .dark class */
+.dark {
+  --bg-gradient: radial-gradient(circle at top right, #252525, #111111, #000000);
+  --glass-panel: rgba(0, 0, 0, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --blur-strength: 16px;
+}
+
+html, body {
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-gradient);
+}
+
+/* Custom Selection Color */
+::selection {
+  background-color: var(--color-brand-primary);
+  color: var(--color-brand-dark);
+}
+
+/* Hide scrollbars globally */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

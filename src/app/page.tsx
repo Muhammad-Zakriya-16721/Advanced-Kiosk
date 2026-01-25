@@ -5,7 +5,6 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ShoppingBag, X } from "lucide-react";
 
 // Components
-// Note: These will need to be converted to .tsx as well
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import MenuGrid from "@/components/MenuGrid";
@@ -13,14 +12,27 @@ import CartPanel from "@/components/CartPanel";
 import OrderSuccess from "@/components/OrderSuccess";
 import SettingsModal from "@/components/SettingsModal";
 
+import CheckoutModal from "@/components/CheckoutModal";
+import SuccessScreen from "@/components/SuccessScreen";
+
+import CustomizationModal from "@/components/CustomizationModal";
+import { Modifier } from "@/data/modifiers";
+
 // Data & Hooks
 import { menuItems } from "@/data/menuItems";
 import { useKeyboardControls, SECTIONS } from "@/hooks/useKeyboardControls";
+import { useMenuFilter } from "@/hooks/useMenuFilter";
+import SortMenu from "@/components/SortMenu";
+import EmptyState from "@/components/EmptyState";
+import FilterModal from "@/components/FilterModal";
 
 export default function Home() {
   const [category, setCategory] = useState("popular");
+  // const [searchQuery, setSearchQuery] = useState(""); <-- Replaced by Hook
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [cartItems, setCartItems] = useState<any[]>([]); // Added explicit 'any' for now to bypass strict TS check during migration
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
@@ -30,6 +42,20 @@ export default function Home() {
   const [isClickFocusEnabled, setIsClickFocusEnabled] = useState(true);
 
   const shouldReduceMotion = useReducedMotion();
+
+  // Custom Hook for Search & Sort
+  const {
+    searchQuery,
+    setSearchQuery,
+    debouncedQuery, // Use this for checks
+    sortOption,
+    setSortOption,
+    filteredItems,
+    isSearching,
+    resetSearch,
+    filters,
+    setFilters,
+  } = useMenuFilter(menuItems);
 
   // 1. Stable Order Number
   const orderNo = useMemo(() => {
@@ -111,12 +137,28 @@ export default function Home() {
     [cartItems],
   );
 
-  const filteredItems = useMemo(() => {
-    return menuItems.filter((item: any) => {
-      if (category === "popular") return item.popular;
-      return item.category === category;
-    });
-  }, [category]);
+  const itemsToDisplay = useMemo(() => {
+    // If user is searching, show the Universal Search results (which are already sorted by the hook)
+    // Use debouncedQuery to prevent flickering or use searchQuery to be instant?
+    // Hook returns filteredItems based on debouncedQuery.
+    // So validation: If input has text but debounce not ready, hook might return OLD filtered items.
+    // But UI shows Loader.
+    // If searchQuery exists, we are in "Search Mode".
+    if (searchQuery) {
+      return filteredItems;
+    }
+
+    // If NO search, use Category Filtering
+    // We also want to respect the Sort Option?
+    // The hook sorts `filteredItems`.
+    // If I take `filteredItems` (which is ALL items sorted, since query is empty),
+    // and THEN filter by category, I preserve the sort!
+
+    // filteredItems = [All Items Sorted by Price]
+    if (category === "popular")
+      return filteredItems.filter((item: any) => item.popular);
+    return filteredItems.filter((item: any) => item.category === category);
+  }, [category, searchQuery, filteredItems]);
 
   const handleAddToCart = useCallback((item: any, quantity = 1) => {
     setCartItems((prev) => {
@@ -161,10 +203,74 @@ export default function Home() {
     }
   }, [isClearConfirming]);
 
-  const handleCheckout = useCallback(() => {
-    setShowSuccess(true);
-    setIsMobileCartOpen(false);
+  /* --- CUSTOMIZATION LOGIC --- */
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
+
+  const handleEditItem = useCallback((item: any) => {
+    setEditingItem(item);
+    setIsCustomizationOpen(true);
   }, []);
+
+  const handleSaveCustomization = useCallback(
+    (oldItem: any, newModifiers: Modifier[]) => {
+      setCartItems((prev) => {
+        // 1. Calculate new price
+        const basePrice = Number(oldItem.price) || 0;
+        const modifiersCost = newModifiers.reduce((acc, m) => acc + m.price, 0);
+        // Note: We don't change the base 'price' field usually to keep reference,
+        // but the requirement implies updating the item's unit price or total.
+        // Let's store modifiers separately and the display logic calculates total.
+
+        // However, the prompt said: "update the local price inside the modal immediately" (handled in modal)
+        // "On Save, update the actual item... with new selectedModifiers and updated totalPrice"
+
+        // We will create a new item object
+        const newItem = {
+          ...oldItem,
+          selectedModifiers: newModifiers,
+          id: Date.now(), // Unique ID for the customized line item
+          quantity: 1,
+          // Update unit price to include modifiers for simple total calculation
+          // Original price is lost here unless stored in 'basePrice', but for this request:
+          // "Update the actual item... with ... updated totalPrice"
+          // Let's assume 'price' is the unit price.
+          // We need to be careful not to double add if we edit again.
+          // Ideally we'd store basePrice. But let's assume menuItems always have the source of truth base price if needed.
+          // For now, let's just add the Modifier costs to the CURRENT base price (if it was raw).
+          // Actually, if we edit an already edited item, 'oldItem.price' might already include mods.
+          // Safer: Recalculate from the original menu item? Or just subtract old mods and add new?
+          // For simplicity/speed: Check if item has 'basePrice', if not set it.
+          basePrice: oldItem.basePrice || oldItem.price,
+          price: (oldItem.basePrice || oldItem.price) + modifiersCost,
+        };
+
+        // 2. Handle Quantity Split
+        if (oldItem.quantity > 1) {
+          // Decrement old item
+          const updatedOldItem = { ...oldItem, quantity: oldItem.quantity - 1 };
+          return [
+            ...prev.map((i) => (i.id === oldItem.id ? updatedOldItem : i)),
+            newItem,
+          ];
+        } else {
+          // Replace old item
+          return prev.map((i) => (i.id === oldItem.id ? newItem : i));
+        }
+      });
+
+      setIsCustomizationOpen(false);
+      setEditingItem(null);
+    },
+    [],
+  );
+
+  const handleCheckout = useCallback(() => {
+    if (cartItems.length > 0) {
+      setIsCheckoutOpen(true);
+      setIsMobileCartOpen(false);
+    }
+  }, [cartItems.length]);
 
   const handleCloseSuccess = useCallback(() => {
     setShowSuccess(false);
@@ -187,7 +293,7 @@ export default function Home() {
       isKeyboardEnabled,
       CATEGORIES,
       setCategory,
-      filteredItems,
+      itemsToDisplay,
       cartItems,
       handleAddToCart,
       handleUpdateQuantity,
@@ -263,7 +369,13 @@ export default function Home() {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-full relative min-w-0 z-0">
         <div className="relative z-30">
-          <Header />
+          <Header
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            isSearching={isSearching}
+            onClearSearch={resetSearch}
+            onFilterClick={() => setShowFilterModal(!showFilterModal)}
+          />
         </div>
 
         {/* SCROLLABLE GRID CONTAINER */}
@@ -286,7 +398,7 @@ export default function Home() {
               >
                 <MenuGrid
                   selectedCategory={category}
-                  items={filteredItems}
+                  items={itemsToDisplay}
                   onAddToCart={handleAddToCart}
                   isKeyboardEnabled={isKeyboardEnabled}
                   isFocusedSection={activeSection === SECTIONS.MAIN}
@@ -294,12 +406,23 @@ export default function Home() {
                   onManualFocus={(index: number) =>
                     handleManualFocus(SECTIONS.MAIN, index)
                   }
+                  headerAction={
+                    <SortMenu
+                      sortOption={sortOption}
+                      onSortChange={setSortOption}
+                    />
+                  }
+                  emptyState={
+                    searchQuery ? (
+                      <EmptyState query={searchQuery} onReset={resetSearch} />
+                    ) : undefined
+                  }
                 />
               </motion.div>
             </AnimatePresence>
           </div>
 
-          <div className="fixed bottom-20 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-[#111] to-transparent pointer-events-none z-10 md:hidden" />
+          {/* Bottom Gradient Removed */}
         </div>
       </main>
 
@@ -323,6 +446,7 @@ export default function Home() {
           }
           isClearConfirming={isClearConfirming}
           onTriggerClear={handleClearCartAction}
+          onEdit={handleEditItem}
         />
       </motion.div>
 
@@ -411,8 +535,12 @@ export default function Home() {
                   orderNo={orderNo}
                   isClearConfirming={isClearConfirming}
                   onTriggerClear={handleClearCartAction}
-                  // @ts-ignore
                   isKeyboardEnabled={isKeyboardEnabled}
+                  // Mobile view typically doesn't use the same keyboard focus logic, pass defaults
+                  isFocusedSection={false}
+                  focusedIndex={-1}
+                  onManualFocus={() => {}}
+                  onEdit={handleEditItem}
                 />
               </div>
             </motion.div>
@@ -420,11 +548,51 @@ export default function Home() {
         )}
       </AnimatePresence>
 
+      {/* SUCCESS SCREEN OVERLAY */}
+      <AnimatePresence>
+        {showSuccess && (
+          <SuccessScreen
+            orderNumber={orderNo}
+            onComplete={handleCloseSuccess}
+          />
+        )}
+      </AnimatePresence>
+
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        onConfirm={() => {
+          setIsCheckoutOpen(false);
+          setShowSuccess(true);
+          // Don't clear cart yet, wait for success screen logic or clear now?
+          // Plan said: "Modal Success -> Close Modal -> Clear Cart -> Open SuccessScreen"
+          setCartItems([]);
+          setIsMobileCartOpen(false);
+        }}
+        items={cartItems}
+        taxRate={0.1}
+      />
+
       <OrderSuccess
-        isOpen={showSuccess}
+        isOpen={false} // Disable old one
         orderNo={orderNo}
         onClose={handleCloseSuccess}
         autoCloseMs={8000}
+      />
+
+      <CustomizationModal
+        isOpen={isCustomizationOpen}
+        onClose={() => setIsCustomizationOpen(false)}
+        item={editingItem}
+        onSave={handleSaveCustomization}
+      />
+
+      <FilterModal
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        filters={filters}
+        setFilters={setFilters}
+        resultCount={itemsToDisplay.length}
       />
     </div>
   );
