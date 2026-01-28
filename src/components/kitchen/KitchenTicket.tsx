@@ -83,7 +83,7 @@ const KitchenTicket = ({
   };
 
   const handleComplete = () => {
-    onUpdateStatus(order.id, "ready");
+    onUpdateStatus(order.id, "completed");
   };
 
   // --- STYLING ---

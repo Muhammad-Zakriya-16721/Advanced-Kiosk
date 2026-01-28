@@ -15,6 +15,9 @@ export const metadata: Metadata = {
 
 import IdleScreensaver from "@/components/kiosk/IdleScreensaver";
 
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,6 +30,8 @@ export default function RootLayout({
           <IdleScreensaver />
           {children}
         </Providers>
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );

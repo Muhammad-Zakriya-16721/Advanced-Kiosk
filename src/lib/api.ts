@@ -228,9 +228,7 @@ export const getActiveOrders = async () => {
     const { data, error } = await supabase
       .from("orders")
       .select("*")
-      .neq("status", "completed")
-      .neq("status", "cancelled")
-      .neq("status", "ready") // Ready = Served/Done for Kitchen
+      .in("status", ["pending", "preparing"]) // Strict Allowlist
       .order("created_at", { ascending: true }); // Oldest first
 
     if (error) {
