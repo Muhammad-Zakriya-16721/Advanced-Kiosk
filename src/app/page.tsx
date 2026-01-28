@@ -161,7 +161,6 @@ export default function Home() {
 
     setLastOrderNo(formattedId);
 
-    // Capture details for Receipt
     const subtotal = cart.reduce(
       (acc, item) => acc + (Number(item.price) || 0) * item.quantity,
       0,
