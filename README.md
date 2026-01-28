@@ -1,61 +1,109 @@
-# QuickBite Kiosk 🍔🍟
+# QuickBite Kiosk
 
-A modern, high-performance self-service kiosk application built with Next.js, TypeScript, and Tailwind CSS. Designed for speed, accessibility, and a premium visual experience.
+> A modern, high-performance self-service food ordering system built for speed, accuracy, and detailed kitchen management.
 
-![Project Preview](/public/preview.png)
+QuickBite Kiosk is a Next.js 16 application designed to streamline the ordering process in fast-casual restaurants. It features a customer-facing kiosk, a real-time Kitchen Display System (KDS), a customer order tracker, and a comprehensive admin dashboard.
 
-> **Note**: This is a Frontend-Only Portfolio Project using mock data. No backend server is required.
+## 🚀 Key Features
 
-## ✨ Features
+### 🖥️ Customer Kiosk
 
-- **Client-side Filtering**: Real-time filtering, sorting, and search with instant feedback (Mock Data).
-- **Visual Richness**: Glassmorphism UI, smooth Framer Motion animations, and responsive layouts.
-- **Smart Cart**: Optimistic UI updates, modifier support (customizations), and localized cart retention.
-- **Checkout UI Flow**:
-  - Frontend-only Payment Simulation (with randomized 10% failure state).
-- Secure Integer-based currency math.
-- Tipping logic (10%, 15%, 20%).
-- **Accessibility (A11y)**: Full keyboard navigation (Tab/Enter/Space), ARIA roles, and focus management.
-- **Performance**: Optimized `next/image` usage, prioritized LCP loading, and code splitting.
+- **Interactive Menu**: Dynamic grid with filtering (Categories, Dietary Tags) and search.
+- **Smart Customization**: Add modifiers (toppings, sauces) with real-time price updates.
+- **AI Upselling**: Intelligent "Frequently Bought Together" suggestions to increase average order value.
+- **Accessibility**: Full keyboard navigation support and accessible ARIA attributes.
+
+### 🍳 Kitchen Display System (KDS)
+
+- **Real-time Orders**: Instant updates via WebSockets (Supabase Realtime).
+- **Smart Pacing**: "Anchor & Fire" logic to ensure all items in an order are ready simultaneously.
+- **Station Management**: Route items to specific stations (Hot Line, Cold Station, etc.).
+- **Staff Sessions**: Secure PIN-based login with attendance tracking.
+
+### 📊 Admin Dashboard
+
+- **Menu Management**: Full CRUD for products, modifiers, and availability toggle.
+- **Analytics**: Real-time sales heatmaps, popular items, and revenue tracking.
+- **Staff Manager**: Manage access codes and view active kitchen staff.
+- **Inventory Control**: "Living Menu" that automatically disables items when out of stock.
+
+### 📱 Waiter Companion App
+
+- **Mobile Optimized**: Dedicated view for floor staff to take orders at the table.
+- **Table Management**: Real-time status (Free, Busy, Paying).
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) + CSS Variables
-- **Animations**: [Framer Motion](https://www.framer.com/motion/)
-- **Icons**: [Lucide React](https://lucide.dev/)
+- **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
+- **Styling**: Tailwind CSS 4 + Framer Motion (Animations)
+- **State Management**: Zustand (Global Store)
+- **Database**: Supabase (PostgreSQL)
+- **Realtime**: Supabase Realtime
+- **Testing**: Vitest + React Testing Library
 
-## 🚀 Getting Started
+## 🏁 Getting Started
 
-1.  **Install Dependencies**:
+### Prerequisites
+
+- Node.js 18+
+- npm or pnpm
+- Supabase project (for DB and Realtime)
+
+### Installation
+
+1.  **Clone the repository**
+
+    ```bash
+    git clone https://github.com/yourusername/quickbite-kiosk.git
+    cd quickbite-kiosk
+    ```
+
+2.  **Install dependencies**
 
     ```bash
     npm install
+    # or
+    pnpm install
     ```
 
-2.  **Run Development Server**:
+3.  **Environment Setup**
+    Create a `.env.local` file in the root directory and add your Supabase credentials:
+
+    ```env
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
+
+4.  **Run the development server**
 
     ```bash
     npm run dev
     ```
 
-3.  **Open Kiosk**:
-    Navigate to [http://localhost:3000](http://localhost:3000)
+    Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## 📂 Project Structure
 
-- `src/app`: Page routes and layouts.
-- `src/components`: Reusable UI components (Sidebar, MenuGrid, Modals).
-- `src/hooks`: Custom logic hooks (`useMenuFilter`, `useKeyboardControls`).
-- `src/lib`: Utilities (`money.ts` for safe math).
-- `src/data`: Mock data for menus and modifiers.
+```bash
+src/
+├── app/                  # Next.js App Router pages
+│   ├── admin/            # Admin Dashboard (Protected)
+│   ├── kitchen/          # Kitchen Display System
+│   ├── tracker/          # Customer Order Status Screen
+│   └── page.tsx          # Main Kiosk Interface
+├── components/           # Reusable UI components
+├── lib/                  # Core logic (Supabase, API, Auth)
+├── store/                # Zustand state stores
+└── types/                # TypeScript definitions
+```
 
-## 🎨 Customization
+## 🔮 Future Roadmap
 
-- **Theme**: Toggle Dark/Light mode via Settings (Gear Icon).
-- **Data**: Edit `src/data/menuItems.ts` to update the menu.
+- [ ] **Gamified Waiting**: Browser games for customers while they wait.
+- [ ] **Voice Announcements**: Audio callouts when orders are ready.
+- [ ] **Multi-language Support**: i18n for diverse customer bases.
 
 ---
 
-_Built for the Modern Food Service Industry._
+**Status**: v1.0 (Completed Jan 2026)

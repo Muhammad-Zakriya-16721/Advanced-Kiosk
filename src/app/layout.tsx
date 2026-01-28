@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Providers from "@/components/Providers";
+import Providers from "@/components/providers/Providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "QuickBite Kiosk",
   description: "Self-ordering restaurant kiosk",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
-import IdleScreen from "@/components/IdleScreen";
+import IdleScreensaver from "@/components/kiosk/IdleScreensaver";
 
 export default function RootLayout({
   children,
@@ -21,7 +24,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          <IdleScreen />
+          <IdleScreensaver />
           {children}
         </Providers>
       </body>

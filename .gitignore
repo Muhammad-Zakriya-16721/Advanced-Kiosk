@@ -37,3 +37,5 @@ out/
 
 # Turbopack / cache
 .turbo/
+
+INTERNAL_DEV_NOTES.md

@@ -192,5 +192,14 @@ export const useKeyboardControls = (
     }
   }, [handleKeyDown]);
 
-  return { activeSection, focusedIndex, setActiveSection, setFocusedIndex };
+  return { 
+    activeSection, 
+    focusedIndex, 
+    setActiveSection, 
+    setFocusedIndex,
+    setManualFocus: (section: string, index: number) => {
+        setActiveSection(section);
+        setFocusedIndex(index);
+    }
+  };
 };

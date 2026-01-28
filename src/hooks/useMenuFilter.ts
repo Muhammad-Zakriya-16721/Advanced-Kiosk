@@ -19,20 +19,27 @@ export interface FilterState {
   tags: FilterTag[];
 }
 
-export const useMenuFilter = (items: FilterItem[], initialSort: SortOption = "recommended") => {
+export const useMenuFilter = (
+  items: FilterItem[],
+  activeCategory: string,
+  initialSort: SortOption = "recommended",
+) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>(initialSort);
   const [isSearching, setIsSearching] = useState(false);
-  
+
   // Advanced Filters
   const [filters, setFilters] = useState<FilterState>({
     priceRange: null,
     tags: [],
   });
 
+  // Ticker removed - we rely on global updates or static filter states now.
+
   // Handle Debouncing
   useEffect(() => {
+    // If we clear search, reset immediately
     if (!searchQuery) {
       setDebouncedQuery("");
       setIsSearching(false);
@@ -52,6 +59,45 @@ export const useMenuFilter = (items: FilterItem[], initialSort: SortOption = "re
   const filteredItems = useMemo(() => {
     let result = [...items];
 
+    // 0. Category Filter (Top Level)
+    // Only apply if NOT searching. If searching, we usually want to search EVERYTHING.
+    // However, usually sidebar filters even search.
+    // Let's following standard pattern: Category applies FIRST.
+    // Exception: If "popular", filter by popular flag.
+    if (!debouncedQuery) {
+      if (activeCategory === "popular") {
+        // INCLUDE: Popular items OR Discounted items (if active)
+        result = result.filter((item) => {
+          const discount = item.discount_percentage || 0;
+          const isTimerActive = item.discount_ends_at
+            ? new Date(item.discount_ends_at) > new Date()
+            : true;
+          return item.popular || (discount > 0 && isTimerActive);
+        });
+
+        // SORT: Discounted items first
+        if (sortOption === "recommended") {
+          result.sort((a, b) => {
+            // Helper to get effective discount
+            const getDisc = (i: FilterItem) => {
+              const isActive = i.discount_ends_at
+                ? new Date(i.discount_ends_at) > new Date()
+                : true;
+              return isActive ? i.discount_percentage || 0 : 0;
+            };
+
+            const discountA = getDisc(a);
+            const discountB = getDisc(b);
+            if (discountA > discountB) return -1;
+            if (discountB > discountA) return 1;
+            return 0;
+          });
+        }
+      } else {
+        result = result.filter((item) => item.category === activeCategory);
+      }
+    }
+
     // 1. Text Search
     if (debouncedQuery.trim()) {
       const q = debouncedQuery.toLowerCase().trim();
@@ -59,8 +105,8 @@ export const useMenuFilter = (items: FilterItem[], initialSort: SortOption = "re
         const nameMatch = item.name.toLowerCase().includes(q);
         const descMatch = item.description?.toLowerCase().includes(q);
         const catMatch = item.category.toLowerCase().includes(q);
-        const priceMatch = item.price.toString().startsWith(q);
-        return nameMatch || descMatch || catMatch || priceMatch;
+        // const priceMatch = item.price.toString().startsWith(q); // Optional
+        return nameMatch || descMatch || catMatch;
       });
     }
 
@@ -79,17 +125,27 @@ export const useMenuFilter = (items: FilterItem[], initialSort: SortOption = "re
     if (filters.tags.length > 0) {
       result = result.filter((item) => {
         const text = (item.name + " " + item.description).toLowerCase();
-        
-        const matchesVeg = !filters.tags.includes("veg") || (
-            (text.includes("veg") || text.includes("cheese") || text.includes("mushroom") || text.includes("salad")) &&
-            !text.includes("beef") && !text.includes("chicken") && !text.includes("pepperoni") && !text.includes("meat")
-        );
 
-        const matchesSpicy = !filters.tags.includes("spicy") || (
-            text.includes("spicy") || text.includes("jalapeno") || text.includes("chilli") || text.includes("pepper jack")
-        );
+        const matchesVeg =
+          !filters.tags.includes("veg") ||
+          ((text.includes("veg") ||
+            text.includes("cheese") ||
+            text.includes("mushroom") ||
+            text.includes("salad")) &&
+            !text.includes("beef") &&
+            !text.includes("chicken") &&
+            !text.includes("pepperoni") &&
+            !text.includes("meat"));
 
-        const matchesPopular = !filters.tags.includes("popular") || !!item.popular;
+        const matchesSpicy =
+          !filters.tags.includes("spicy") ||
+          text.includes("spicy") ||
+          text.includes("jalapeno") ||
+          text.includes("chilli") ||
+          text.includes("pepper jack");
+
+        const matchesPopular =
+          !filters.tags.includes("popular") || !!item.popular;
 
         return matchesVeg && matchesSpicy && matchesPopular;
       });
@@ -109,7 +165,7 @@ export const useMenuFilter = (items: FilterItem[], initialSort: SortOption = "re
     }
 
     return result;
-  }, [items, debouncedQuery, sortOption, filters]);
+  }, [items, debouncedQuery, sortOption, filters, activeCategory]);
 
   return {
     searchQuery,
@@ -122,8 +178,8 @@ export const useMenuFilter = (items: FilterItem[], initialSort: SortOption = "re
     filteredItems,
     isSearching,
     resetSearch: () => {
-        setSearchQuery("");
-        setFilters({ priceRange: null, tags: [] });
+      setSearchQuery("");
+      setFilters({ priceRange: null, tags: [] });
     },
   };
 };
