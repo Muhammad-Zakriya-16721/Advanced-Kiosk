@@ -199,11 +199,15 @@ const MenuItemRow = ({
 
   return (
     <div
-      className={`flex items-center gap-4 p-3 rounded-xl border transition-all ${
+      className={`flex items-center gap-4 p-3 rounded-xl border transition-all cursor-pointer ${
         !isSoldOut
           ? "bg-white/5 border-transparent hover:bg-white/10"
           : "bg-red-500/5 border-red-500/20 opacity-75"
       }`}
+      onClick={(e) => {
+        // Prevent edit if clicking toggle/inner buttons (handled by bubbling check or explicit stops)
+        onEdit();
+      }}
     >
       <img
         src={item.image}
@@ -254,7 +258,10 @@ const MenuItemRow = ({
       </div>
 
       <div className="flex items-center gap-3">
-        <label className="relative inline-flex items-center cursor-pointer">
+        <label
+          className="relative inline-flex items-center cursor-pointer"
+          onClick={(e) => e.stopPropagation()}
+        >
           <input
             type="checkbox"
             checked={item.is_available}
@@ -265,7 +272,10 @@ const MenuItemRow = ({
         </label>
 
         <button
-          onClick={onEdit}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
           className="p-2 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors"
         >
           <Edit2 size={16} />

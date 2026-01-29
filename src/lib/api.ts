@@ -63,18 +63,22 @@ export const getProducts = async (): Promise<Product[]> => {
     if (dealIds.length > 0) {
       const { data: bundlesData, error: bundlesError } = await supabase
         .from("product_bundles")
-        .select("deal_id, product_id, quantity, products(name)") // Fetch product name too if possible
+        .select("deal_id, product_id, quantity") // Removed ambiguous join products(name)
         .in("deal_id", dealIds);
 
       if (!bundlesError && bundlesData) {
         bundlesData.forEach((b: any) => {
           if (!bundlesMap[b.deal_id]) bundlesMap[b.deal_id] = [];
 
-          // Map to expected structure
+          // Find product name from already fetched productsData (in-memory join)
+          const linkedProduct = productsData.find(
+            (p: any) => p.id === b.product_id,
+          );
+
           bundlesMap[b.deal_id].push({
             product_id: b.product_id,
             quantity: b.quantity,
-            product_name: b.products?.name, // Assuming generic join works, if not we handle gracefully
+            product_name: linkedProduct?.name || "Unknown Item", // Fallback
           });
         });
       } else if (bundlesError) {
