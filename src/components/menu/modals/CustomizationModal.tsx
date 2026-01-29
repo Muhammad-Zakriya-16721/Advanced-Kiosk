@@ -5,17 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Check } from "lucide-react";
 import { formatPrice } from "@/lib/money";
 import { calculateDiscountedPrice } from "@/lib/api";
-import { getModifiersForCategory } from "@/data/modifiers";
+import { getModifiersForCategory, ModifierGroup } from "@/data/modifiers";
 import { useCartStore } from "@/store/cartStore";
 
 interface ModifierOption {
   name: string;
   price: number;
-}
-
-interface ModifierGroup {
-  name: string;
-  options: ModifierOption[];
 }
 
 interface CustomizationModalProps {
@@ -48,13 +43,52 @@ const CustomizationModal = ({
   }, [isOpen, item]);
 
   const toggleOption = (option: ModifierOption, groupName: string) => {
-    setSelectedModifiers((prev) => {
-      const formattedGroup = groupName.toLowerCase();
-      // Heuristic: "Add-ons", "Extras", "Toppings" are multi-select. Everything else (Level, Size, Choice) is single.
-      const isMultiSelect = ["add-on", "extra", "topping", "option"].some((k) =>
-        formattedGroup.includes(k),
-      );
+    // Find the group definition to check select mode
+    // We need to look up the group from 'modifierGroups' inside the render scope,
+    // but better to pass the group object or mode to this function.
+    // However, recreating 'modifierGroups' here is safe since it is deterministic based on 'item'.
 
+    // RE-DERIVE modifierGroups (A bit redundant but safe)
+    let currentGroups: ModifierGroup[] = [];
+    if (
+      item?.modifiers &&
+      Array.isArray(item.modifiers) &&
+      item.modifiers.length > 0
+    ) {
+      // Logic mirrors lines 96-123
+      const rawMods = item.modifiers;
+      const definedGroups: ModifierGroup[] = [];
+      const flatOptions: ModifierOption[] = [];
+      rawMods.forEach((m: any) => {
+        if (m.options && Array.isArray(m.options)) {
+          definedGroups.push(m);
+        } else if (m.name && m.price !== undefined) {
+          flatOptions.push(m);
+        }
+      });
+      if (flatOptions.length > 0)
+        definedGroups.push({ name: "Options", options: flatOptions });
+      currentGroups = definedGroups;
+    } else if (item?.category) {
+      // Fallback
+      const staticMods = getModifiersForCategory(item.category);
+      if (staticMods.length > 0)
+        currentGroups = [{ name: "Customize", options: staticMods }];
+    }
+
+    const targetGroup = currentGroups.find((g) => g.name === groupName);
+    const formattedGroup = groupName.toLowerCase();
+
+    // LOGIC: Use explicit flag if present, otherwise heuristic
+    let isMultiSelect = ["add-on", "extra", "topping", "option"].some((k) =>
+      formattedGroup.includes(k),
+    );
+
+    if (targetGroup?.allow_multiselect !== undefined) {
+      isMultiSelect = targetGroup.allow_multiselect;
+    }
+
+    setSelectedModifiers((prev) => {
       const exists = prev.some(
         (m) => m.name === option.name && m.group === groupName,
       );

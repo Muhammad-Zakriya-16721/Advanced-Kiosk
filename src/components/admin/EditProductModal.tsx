@@ -51,6 +51,7 @@ export default function EditProductModal({
   >([]);
   const [newModName, setNewModName] = useState("");
   const [newModPrice, setNewModPrice] = useState("");
+  const [modifiersMultiSelect, setModifiersMultiSelect] = useState(true);
 
   // Sync when item changes
   useEffect(() => {
@@ -101,8 +102,24 @@ export default function EditProductModal({
       }
 
       setCustomModifiers(flat);
+
+      // Init MultiSelect preference (Check first group to guess)
+      if (item.modifiers && item.modifiers.length > 0) {
+        const first = item.modifiers[0] as any;
+        if (first.allow_multiselect !== undefined) {
+          setModifiersMultiSelect(first.allow_multiselect);
+        } else {
+          // Heuristic Fallback
+          const name = first.name?.toLowerCase() || "";
+          const isMulti = ["add-on", "extra", "topping", "option"].some((k) =>
+            name.includes(k),
+          );
+          setModifiersMultiSelect(isMulti);
+        }
+      }
     } else {
       setCustomModifiers([]);
+      setModifiersMultiSelect(true);
     }
   }, [item]);
 
@@ -129,6 +146,7 @@ export default function EditProductModal({
                   name: m.name,
                   price: m.price,
                 })),
+                allow_multiselect: modifiersMultiSelect,
               },
             ]
           : [];
@@ -315,6 +333,27 @@ export default function EditProductModal({
                 <List size={16} className="text-zinc-500" />
                 <label className="text-xs font-bold text-zinc-500 uppercase">
                   Custom Modifiers
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2 mb-3">
+                <div
+                  onClick={() => setModifiersMultiSelect(!modifiersMultiSelect)}
+                  className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${modifiersMultiSelect ? "bg-brand-primary border-brand-primary" : "border-zinc-600 bg-black/20"}`}
+                >
+                  {modifiersMultiSelect && (
+                    <Plus
+                      size={10}
+                      className="text-black rotate-45"
+                      strokeWidth={4}
+                    />
+                  )}
+                </div>
+                <label
+                  onClick={() => setModifiersMultiSelect(!modifiersMultiSelect)}
+                  className="text-xs text-zinc-400 select-none cursor-pointer"
+                >
+                  Allow picking multiple options?
                 </label>
               </div>
 

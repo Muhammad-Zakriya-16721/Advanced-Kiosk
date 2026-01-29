@@ -8,6 +8,7 @@ import {
   Clock,
   Flame,
   List,
+  Check,
 } from "lucide-react";
 import { Product, createProduct, createDeal } from "@/lib/api";
 import { Modifier, ModifierGroup } from "@/data/modifiers";
@@ -58,6 +59,7 @@ export default function AddProductModal({
   // Local state for modifier inputs (transient)
   const [newModName, setNewModName] = useState("");
   const [newModPrice, setNewModPrice] = useState("");
+  const [modifiersMultiSelect, setModifiersMultiSelect] = useState(true); // Default to true for "Options"
   const [searchQuery, setSearchQuery] = useState("");
 
   if (!isOpen) return null;
@@ -84,6 +86,7 @@ export default function AddProductModal({
                   name: m.name,
                   price: m.price,
                 })),
+                allow_multiselect: modifiersMultiSelect,
               },
             ]
           : [];
@@ -149,10 +152,13 @@ export default function AddProductModal({
   };
 
   const toggleBundleItem = (productId: string) => {
+    // User Request: "The more click, the more item added" -> Increment Mode
     const exists = current.bundleItems.find((p) => p.product_id === productId);
     let newItems;
     if (exists) {
-      newItems = current.bundleItems.filter((p) => p.product_id !== productId);
+      newItems = current.bundleItems.map((p) =>
+        p.product_id === productId ? { ...p, quantity: p.quantity + 1 } : p,
+      );
     } else {
       newItems = [
         ...current.bundleItems,
@@ -166,6 +172,16 @@ export default function AddProductModal({
     const newItems = current.bundleItems.map((item) => {
       if (item.product_id === productId) {
         return { ...item, quantity: Math.max(1, item.quantity + delta) };
+      }
+      return item;
+    });
+    updateDraft({ bundleItems: newItems });
+  };
+
+  const setBundleQuantity = (productId: string, quantity: number) => {
+    const newItems = current.bundleItems.map((item) => {
+      if (item.product_id === productId) {
+        return { ...item, quantity: Math.max(1, quantity) };
       }
       return item;
     });
@@ -341,6 +357,28 @@ export default function AddProductModal({
                   </label>
                 </div>
 
+                {/* Multi-Select Toggle */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div
+                    onClick={() =>
+                      setModifiersMultiSelect(!modifiersMultiSelect)
+                    }
+                    className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${modifiersMultiSelect ? "bg-brand-primary border-brand-primary" : "border-zinc-600 bg-black/20"}`}
+                  >
+                    {modifiersMultiSelect && (
+                      <Check size={10} className="text-black" strokeWidth={4} />
+                    )}
+                  </div>
+                  <label
+                    onClick={() =>
+                      setModifiersMultiSelect(!modifiersMultiSelect)
+                    }
+                    className="text-xs text-zinc-400 select-none cursor-pointer"
+                  >
+                    Allow picking multiple options?
+                  </label>
+                </div>
+
                 <div className="flex gap-2 mb-3">
                   <input
                     className="flex-1 bg-black/40 rounded-lg px-3 py-2 text-sm text-white border border-white/10"
@@ -427,12 +465,12 @@ export default function AddProductModal({
                   return (
                     <div
                       key={prod.id}
-                      className={`flex items-center justify-between p-3 rounded-xl border transition-all ${inBundle ? "bg-brand-primary/10 border-brand-primary" : "bg-white/5 border-transparent hover:bg-white/10"}`}
+                      onClick={() => toggleBundleItem(prod.id)}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${inBundle ? "bg-brand-primary/10 border-brand-primary" : "bg-white/5 border-transparent hover:bg-white/10"}`}
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          onClick={() => toggleBundleItem(prod.id)}
-                          className={`w-5 h-5 rounded-md border flex items-center justify-center cursor-pointer transition-colors ${inBundle ? "bg-brand-primary border-brand-primary" : "border-zinc-600"}`}
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${inBundle ? "bg-brand-primary border-brand-primary" : "border-zinc-600"}`}
                         >
                           {inBundle && (
                             <Plus className="w-3 h-3 text-brand-dark" />
@@ -451,19 +489,33 @@ export default function AddProductModal({
                       </div>
 
                       {inBundle && (
-                        <div className="flex items-center gap-3 bg-black/30 rounded-lg px-2 py-1">
+                        <div
+                          className="flex items-center gap-3 bg-black/30 rounded-lg px-2 py-1"
+                          onClick={(e) => e.stopPropagation()} // Prevent toggling when adjusting qty
+                        >
                           <button
                             onClick={() => updateBundleQuantity(prod.id, -1)}
-                            className="text-zinc-400 hover:text-white"
+                            className="text-zinc-400 hover:text-white px-2"
                           >
                             -
                           </button>
-                          <span className="text-white text-sm font-bold w-4 text-center">
-                            {inBundle.quantity}
-                          </span>
+                          <input
+                            type="number"
+                            value={inBundle.quantity}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              // Allow NaN (empty string) to be typed, but only update if number
+                              // For consistent UX, we rely on number input behavior.
+                              // Improvements: Use setBundleQuantity for direct set.
+                              if (!isNaN(val)) {
+                                setBundleQuantity(prod.id, val);
+                              }
+                            }}
+                            className="w-10 bg-transparent text-center text-white text-sm font-bold focus:outline-none"
+                          />
                           <button
                             onClick={() => updateBundleQuantity(prod.id, 1)}
-                            className="text-white hover:text-brand-primary"
+                            className="text-white hover:text-brand-primary px-2"
                           >
                             +
                           </button>

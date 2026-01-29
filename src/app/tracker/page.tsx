@@ -83,9 +83,7 @@ export default function OrderTracker() {
     const initData = async () => {
       const active = await getActiveOrders();
       // KDS Flow: pending -> preparing -> ready -> completed
-      const preparingOrders = active.filter(
-        (o) => o.status === "pending" || o.status === "preparing",
-      );
+      const preparingOrders = active.filter((o) => o.status === "preparing");
       // "Ready" orders are shown as "Now Serving"
       const readyOrders = active.filter((o) => o.status === "ready");
 
@@ -199,25 +197,36 @@ export default function OrderTracker() {
           <div className="flex-1 p-8 overflow-y-auto">
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence>
-                {preparingOrders.map((order) => (
-                  <motion.div
-                    key={order.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    className="bg-white/5 rounded-2xl p-6 flex flex-col items-center justify-center border-2 border-white/5"
-                  >
-                    <span className="text-gray-500 font-bold uppercase text-sm mb-2">
-                      Order
-                    </span>
-                    <span className="text-5xl font-black text-gray-300 font-mono tracking-tighter">
-                      {order.order_number
-                        ? `#${order.order_number}`
-                        : formatOrderId(order.id)}
-                    </span>
-                  </motion.div>
-                ))}
+                {preparingOrders.map((order) => {
+                  const prepTime =
+                    order.items?.reduce(
+                      (max: number, i: any) => Math.max(max, i.prep_time || 5),
+                      5,
+                    ) || 5;
+                  return (
+                    <motion.div
+                      key={order.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="bg-white/5 rounded-2xl p-6 flex flex-col items-center justify-center border-2 border-white/5 relative"
+                    >
+                      <span className="text-gray-500 font-bold uppercase text-sm mb-2">
+                        Order
+                      </span>
+                      <span className="text-5xl font-black text-gray-300 font-mono tracking-tighter">
+                        {order.order_number
+                          ? `#${order.order_number}`
+                          : formatOrderId(order.id)}
+                      </span>
+                      <div className="absolute bottom-4 right-4 flex items-center gap-1 text-zinc-500 text-xs font-bold bg-black/40 px-2 py-1 rounded">
+                        <Clock size={12} />
+                        {prepTime}m
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </div>
           </div>

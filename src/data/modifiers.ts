@@ -13,6 +13,7 @@ export interface ModifierOption {
 export interface ModifierGroup {
   name: string;
   options: ModifierOption[];
+  allow_multiselect?: boolean;
 }
 
 export const MODIFIERS: Record<string, Modifier[]> = {

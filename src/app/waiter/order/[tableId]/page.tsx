@@ -160,7 +160,11 @@ export default function WaiterOrder() {
   // Categories
   const categories = useMemo(() => {
     const cats = new Set(products.map((p) => p.category));
-    return ["All", ...Array.from(cats)];
+    // Ensure "Popular" is available if any products are marked popular
+    const hasPopular = products.some((p) => p.popular);
+    const catArray = Array.from(cats).sort();
+
+    return ["All", "Popular", ...catArray];
   }, [products]);
 
   // Filtered Products
@@ -169,8 +173,18 @@ export default function WaiterOrder() {
       const matchesSearch = p.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      const matchesCat =
-        selectedCategory === "All" || p.category === selectedCategory;
+
+      let matchesCat = true;
+      if (selectedCategory === "All") {
+        matchesCat = true;
+      } else if (selectedCategory === "Popular") {
+        // Global Search logic:
+        if (searchTerm) matchesCat = true;
+        else matchesCat = p.popular === true;
+      } else {
+        matchesCat = p.category === selectedCategory;
+      }
+
       return matchesSearch && matchesCat;
     });
   }, [products, searchTerm, selectedCategory]);
