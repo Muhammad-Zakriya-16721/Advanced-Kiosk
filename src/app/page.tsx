@@ -306,7 +306,7 @@ export default function Home() {
               </h3>
               <p className="text-gray-500 text-center max-w-sm">{error}</p>
               <button
-                onClick={refetch}
+                onClick={() => refetch()}
                 className="mt-4 px-6 py-2 bg-brand-primary text-brand-dark rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all cursor-pointer"
               >
                 Retry

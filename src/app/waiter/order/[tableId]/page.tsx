@@ -67,7 +67,7 @@ export default function WaiterOrder() {
   const [showPayConfirmation, setShowPayConfirmation] = useState(false);
 
   // 1. Fetch Active Orders
-  const fetchActiveOrders = async () => {
+  const fetchActiveOrders = async (isInitial = false) => {
     setIsLoadingActive(true);
     const { data } = await import("@/lib/supabase").then((mod) =>
       mod.supabase
@@ -79,18 +79,20 @@ export default function WaiterOrder() {
 
     if (data && data.length > 0) {
       setActiveOrders(data);
-      if (localCart.length === 0) {
+      // Only redirect to bill on INITIAL load, not every poll
+      if (isInitial && localCart.length === 0) {
         setViewMode("bill");
       }
     } else {
       setActiveOrders([]);
-      setViewMode("menu");
+      // If no active orders, we stay/go to menu.
+      if (isInitial) setViewMode("menu");
     }
     setIsLoadingActive(false);
   };
 
   useEffect(() => {
-    fetchActiveOrders();
+    fetchActiveOrders(true); // Initial load -> Allow redirect
     refetchMenu();
 
     let channel: any;
@@ -124,7 +126,7 @@ export default function WaiterOrder() {
     setupSubscription();
 
     // Polling Fallback (Every 5 seconds)
-    interval = setInterval(fetchActiveOrders, 5000);
+    interval = setInterval(() => fetchActiveOrders(false), 5000);
 
     return () => {
       clearInterval(interval);
@@ -510,7 +512,8 @@ export default function WaiterOrder() {
         ) : (
           <div className="grid grid-cols-1 gap-3">
             {filteredProducts.map((product) => {
-              const isSoldOut = (product.stock_level ?? 999) <= 0;
+              const isSoldOut =
+                !product.is_available || (product.stock_level ?? 999) <= 0;
               return (
                 <div
                   key={product.id}

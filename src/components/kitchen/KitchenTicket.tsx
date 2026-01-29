@@ -15,7 +15,11 @@ import { calculateOrderTimings, getTimeToFire } from "@/lib/kds-logic";
 
 interface KitchenTicketProps {
   order: any;
-  onUpdateStatus: (orderId: string, status: string, payload?: any) => void;
+  onUpdateStatus: (
+    orderId: string,
+    status: string,
+    payload?: any,
+  ) => Promise<boolean | void> | void;
   allProducts: Product[];
 }
 
@@ -27,6 +31,7 @@ const KitchenTicket = ({
   const [elapsed, setElapsed] = useState("00:00");
   const [now, setNow] = useState(Date.now());
   const [isLate, setIsLate] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Derive Status & Timings
   const kdsOrder = useMemo(() => {
@@ -82,8 +87,14 @@ const KitchenTicket = ({
     });
   };
 
-  const handleComplete = () => {
-    onUpdateStatus(order.id, "completed");
+  const handleComplete = async () => {
+    setIsLoading(true);
+    // Mark as "ready" for Tracker/Waiter apps
+    const success = await onUpdateStatus(order.id, "ready"); // Changed ticket.id to order.id
+    if (success) {
+      // Optional: Add sound or visual feedback here
+    }
+    setIsLoading(false);
   };
 
   // --- STYLING ---
@@ -228,12 +239,13 @@ const KitchenTicket = ({
         ) : (
           <button
             onClick={handleComplete}
-            className="
+            disabled={isLoading}
+            className={`
                   w-full py-4 rounded-xl font-black text-xl uppercase tracking-widest
-                  bg-zinc-800 hover:bg-green-600 text-gray-300 hover:text-white
                   transition-all active:scale-95 flex items-center justify-center gap-3
                   group
-               "
+                  ${isLoading ? "bg-zinc-800 opacity-50 cursor-not-allowed" : "bg-zinc-800 hover:bg-green-600 text-gray-300 hover:text-white"}
+               `}
           >
             <div className="bg-white/10 p-1 rounded-full group-hover:bg-white/20">
               <Check size={20} />

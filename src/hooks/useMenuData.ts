@@ -6,8 +6,8 @@ export const useMenuData = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    setIsLoading(true);
+  const fetchData = async (isBackground = false) => {
+    if (!isBackground) setIsLoading(true);
     setError(null);
     try {
       const data = await getProducts();
@@ -35,8 +35,10 @@ export const useMenuData = () => {
         { event: "*", schema: "public", table: "products" },
         (payload) => {
           console.log("Realtime Menu Update:", payload);
-          // Simple strategy: Re-fetch all data to ensure consistency and correct mapping
-          fetchData();
+          // Add 500ms delay to ensure DB propagation and avoid race conditions
+          setTimeout(() => {
+            fetchData(true); // true = isBackground refresh (no loading spinner)
+          }, 500);
         },
       )
       .subscribe();

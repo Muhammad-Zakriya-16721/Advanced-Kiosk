@@ -82,12 +82,19 @@ export default function OrderTracker() {
   useEffect(() => {
     const initData = async () => {
       const active = await getActiveOrders();
-      const pending = active.filter((o: any) => o.status === "pending");
-      setPreparingOrders(pending);
-      setWaitTime(5 + Math.ceil(pending.length / 2)); // Dynamic Wait Time Heuristic
+      // KDS Flow: pending -> preparing -> ready -> completed
+      const preparingOrders = active.filter(
+        (o) => o.status === "pending" || o.status === "preparing",
+      );
+      // "Ready" orders are shown as "Now Serving"
+      const readyOrders = active.filter((o) => o.status === "ready");
+
+      setPreparingOrders(preparingOrders);
+      setReadyOrders(readyOrders);
+      setWaitTime(5 + Math.ceil(preparingOrders.length / 2)); // Dynamic Wait Time Heuristic
 
       const recent = await getRecentCompletedOrders();
-      setReadyOrders(recent);
+      setReadyOrders((prev) => [...recent, ...prev].slice(0, 10)); // Merge with any 'ready' orders from active
     };
     initData();
   }, []);
