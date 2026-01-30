@@ -33,12 +33,10 @@ const KitchenTicket = ({
   const [isLate, setIsLate] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Derive Status & Timings
   const kdsOrder = useMemo(() => {
     return calculateOrderTimings(order, allProducts);
-  }, [order, allProducts, now]); // Recalc on 'now' to update Fire status dynamically
+  }, [order, allProducts, now]);
 
-  // Determine Ticket Mode
   const isPending = order.status === "pending";
   const isPreparing = order.status === "preparing";
 
