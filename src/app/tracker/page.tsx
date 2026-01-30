@@ -109,13 +109,10 @@ export default function OrderTracker() {
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newOrder = payload.new;
-            if (newOrder.status === "pending") {
-              setPreparingOrders((prev) => {
-                const updated = [...prev, newOrder];
-                setWaitTime(5 + Math.ceil(updated.length / 2));
-                return updated;
-              });
-            } else if (newOrder.status === "completed") {
+            // FIX: Only add if status is ALREADY preparing or ready (unlikely for new orders, but possible)
+            if (newOrder.status === "preparing") {
+              setPreparingOrders((prev) => [...prev, newOrder]);
+            } else if (newOrder.status === "ready") {
               setReadyOrders((prev) => [newOrder, ...prev].slice(0, 10));
               playChime();
               announceOrder(
@@ -124,22 +121,34 @@ export default function OrderTracker() {
                   : formatOrderId(newOrder.id),
               );
             }
+            // Ignore "pending" (Kitchen hasn't accepted yet)
           }
 
           if (payload.eventType === "UPDATE") {
             const updated = payload.new;
 
-            // Remove from pending
-            setPreparingOrders((prev) => {
-              const filtered = prev.filter((o) => o.id !== updated.id);
-              setWaitTime(5 + Math.ceil(filtered.length / 2));
-              return filtered;
-            });
+            // Handle "Preparing"
+            if (updated.status === "preparing") {
+              setPreparingOrders((prev) => {
+                const exists = prev.find((o) => o.id === updated.id);
+                if (exists)
+                  return prev.map((o) => (o.id === updated.id ? updated : o));
+                return [...prev, updated];
+              });
+              // Ensure removed from Ready if moving back? (Unlikely)
+              setReadyOrders((prev) => prev.filter((o) => o.id !== updated.id));
+            }
 
-            if (updated.status === "completed") {
+            // Handle "Ready"
+            else if (updated.status === "ready") {
+              // Remove from Preparing
+              setPreparingOrders((prev) =>
+                prev.filter((o) => o.id !== updated.id),
+              );
+
+              // Add to Ready
               setReadyOrders((prev) => {
                 if (prev.find((o) => o.id === updated.id)) return prev;
-                // New Completion
                 playChime();
                 announceOrder(
                   updated.order_number
@@ -148,14 +157,24 @@ export default function OrderTracker() {
                 );
                 return [updated, ...prev].slice(0, 10);
               });
-            } else if (updated.status === "pending") {
-              // Moved back?
-              setPreparingOrders((prev) => {
-                if (prev.find((o) => o.id === updated.id)) return prev;
-                const updatedList = [...prev, updated];
-                setWaitTime(5 + Math.ceil(updatedList.length / 2));
-                return updatedList;
-              });
+            }
+
+            // Handle "Completed" (Remove from Screen)
+            else if (updated.status === "completed") {
+              setPreparingOrders((prev) =>
+                prev.filter((o) => o.id !== updated.id),
+              );
+              // Keep in readyOrders list momentarily or remove? Usually completed means "picked up".
+              // Logic says: Ready -> Now Serving. Completed -> Gone.
+              setReadyOrders((prev) => prev.filter((o) => o.id !== updated.id));
+            }
+
+            // Handle Revert to "Pending"
+            else if (updated.status === "pending") {
+              setPreparingOrders((prev) =>
+                prev.filter((o) => o.id !== updated.id),
+              );
+              setReadyOrders((prev) => prev.filter((o) => o.id !== updated.id));
             }
           }
         },
